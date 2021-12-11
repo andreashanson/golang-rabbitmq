@@ -8,10 +8,9 @@ You might need to run the container with management enabled
 Either run the container with prefix -management
 Or lookup how to enable it in the running container.
 
-docker container exec -it some-rabbit5 rabbitmq-plugins enable rabbitmq_management
+docker container exec -it <container_id> rabbitmq-plugins enable rabbitmq_management
 
-
-# Enter locally
+# Enter GUI locally
 url: http://localhost:15672/
 user: guest
 pw: guest

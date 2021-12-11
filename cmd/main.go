@@ -1,50 +1,87 @@
 package main
 
 import (
+	"fmt"
 	"log"
+	"time"
 
-	"github.com/streadway/amqp"
+	"github.com/andreashanson/golang-rabbitmq/pkg/config"
+	"github.com/andreashanson/golang-rabbitmq/pkg/consumer"
+	"github.com/andreashanson/golang-rabbitmq/pkg/msg"
+	"github.com/andreashanson/golang-rabbitmq/pkg/producer"
+	"github.com/andreashanson/golang-rabbitmq/pkg/rabbit"
+	"github.com/andreashanson/golang-rabbitmq/pkg/scheduler"
 )
 
 func main() {
-	conn, err := amqp.Dial("amqp://guest:guest@localhost:5672/")
-	failOnError(err, "Failed to connect to RabbitMQ")
-	defer conn.Close()
 
-	ch, err := conn.Channel()
-	failOnError(err, "Failed to open a channel")
-	defer ch.Close()
-
-	q, err := ch.QueueDeclare(
-		"hello", // name
-		false,   // durable
-		false,   // delete when unused
-		false,   // exclusive
-		false,   // no-wait
-		nil,     // arguments
-	)
-	failOnError(err, "Failed to declare a queue")
-
-	body := "{'hello':'world'}"
-
-	for i := 0; i < 100; i++ {
-
-		err = ch.Publish(
-			"",     // exchange
-			q.Name, // routing key
-			false,  // mandatory
-			false,  // immediate
-			amqp.Publishing{
-				ContentType: "application/json",
-				Body:        []byte(body),
-			},
-		)
+	cfg := config.Config{
+		RabbitMQ: &config.RabbitMQConfig{
+			Host:     "localhost",
+			User:     "guest",
+			Password: "guest",
+		},
 	}
-	failOnError(err, "Failed to publish a message")
-}
 
-func failOnError(err error, msg string) {
+	connection, err := rabbit.Connect(cfg.RabbitMQ)
 	if err != nil {
-		log.Fatalf("%s: %s", msg, err)
+		log.Fatal(err)
+	}
+
+	rabbitRepo, err := rabbit.NewRabbitMQRepo(connection)
+	if err != nil {
+		log.Fatal(err)
+	}
+	defer rabbitRepo.Channel.Close()
+
+	prd := producer.New(&rabbitRepo)
+
+	sch := scheduler.NewService(1, *prd)
+	errChan2 := make(chan error)
+	go func() {
+		time := sch.Start(errChan2)
+		for t := range time {
+			fmt.Println(t)
+		}
+	}()
+
+	//for i := 0; i < 100; i++ {
+	//	indexString := strconv.Itoa(i)
+	//	body := "{'hello':'world', 'index':'" + indexString + "'}"
+	//
+	//	err := prd.Publish([]byte(body))
+	//	if err != nil {
+	//		log.Fatal(err)
+	//	}
+	//}
+	fmt.Println("Sleep for five seconds before consume msgs")
+	time.Sleep(5 * time.Second)
+	cns := consumer.NewService(&rabbitRepo)
+	msgs, err := cns.Consume()
+	if err != nil {
+		log.Fatal(err)
+	}
+	out := make(chan msg.Message)
+	errChan := make(chan error)
+
+	go func() {
+		err := cns.HandleMessages(msgs, out)
+		if err != nil {
+			errChan <- err
+		}
+	}()
+
+	for {
+		select {
+		case msg := <-out:
+			fmt.Println(msg)
+		//case forever := <-forever:
+		//	fmt.Print("DIE")
+		//	fmt.Println(forever)
+		case errs := <-errChan:
+			fmt.Println(errs)
+		case errs2 := <-errChan2:
+			fmt.Println(errs2)
+		}
 	}
 }
