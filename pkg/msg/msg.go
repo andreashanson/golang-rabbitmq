@@ -8,6 +8,5 @@ type Message struct {
 
 type Body struct {
 	Type      string `json:"type"`
-	Msg       string `json:"msg"`
 	StartTime string `json:"start_time"`
 }

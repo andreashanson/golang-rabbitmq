@@ -10,8 +10,10 @@ import (
 
 type Service struct {
 	Timer    *time.Ticker
-	Jobs     *cron.Cron
+	CronJob  *cron.Cron
 	Producer producer.Service
+	Funcs    func()
+	Jobs     []job
 }
 
 func NewService(t int64, p producer.Service) *Service {
@@ -22,23 +24,23 @@ func NewService(t int64, p producer.Service) *Service {
 
 	return &Service{
 		Timer:    timer,
-		Jobs:     c,
+		CronJob:  c,
 		Producer: p,
+		Funcs:    getGoogleData,
+		Jobs:     *getJobs(),
 	}
 }
 
 func (s *Service) Start(errChan chan error) <-chan time.Time {
 	fmt.Println("Start schduler service.")
 
-	s.Jobs.AddFunc("*/5 * * * *", func() {
-		t := time.Now().UTC()
-		t = t.Truncate(time.Duration(t.Hour()) * time.Hour)
-		err := s.Producer.Publish([]byte(`{"type":"hotspot", "msg":"Hello", "start_time":"` + t.String() + `"}`))
+	for _, job := range s.Jobs {
+		err := s.CronJob.AddFunc(job.cronSchedule, job.cronFunc)
 		if err != nil {
-			fmt.Println("Could not Publish msg")
-			errChan <- err
+			fmt.Println(err)
 		}
-	})
-	s.Jobs.Start()
+	}
+
+	s.CronJob.Start()
 	return s.Timer.C
 }
