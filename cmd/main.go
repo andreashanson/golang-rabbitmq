@@ -36,14 +36,14 @@ func main() {
 		sch.Start(errChan)
 	}()
 
-	cns2 := consumer.NewService(&rabbitRepo)
-	helloMsgs, err := cns2.Consume("hello")
+	jobConsumer := consumer.NewService(&rabbitRepo)
+	jobMsgs, err := jobConsumer.Consume("jobs")
 	if err != nil {
 		log.Fatal(err)
 	}
 
 	go func() {
-		err := cns2.HandleMessages(helloMsgs, out)
+		err := jobConsumer.HandleMessages("jobs", jobMsgs, out)
 		if err != nil {
 			errChan <- err
 		}
@@ -56,7 +56,7 @@ func main() {
 	}
 
 	go func() {
-		err := cns.HandleMessages(msgs, out)
+		err := cns.HandleMessages("scheduler", msgs, out)
 		if err != nil {
 			errChan <- err
 		}
