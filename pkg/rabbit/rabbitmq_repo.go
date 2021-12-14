@@ -16,7 +16,7 @@ func NewRabbitMQRepo(conn *amqp.Connection) (RabbitMQRepo, error) {
 		return RabbitMQRepo{}, err
 	}
 
-	q, err := ch.QueueDeclare(
+	schedulerQueue, err := ch.QueueDeclare(
 		"scheduler", // name
 		false,       // durable
 		false,       // delete when unused
@@ -28,7 +28,7 @@ func NewRabbitMQRepo(conn *amqp.Connection) (RabbitMQRepo, error) {
 	if err != nil {
 		return RabbitMQRepo{}, err
 	}
-	return RabbitMQRepo{Channel: ch, schedulerQueue: &q}, nil
+	return RabbitMQRepo{Channel: ch, schedulerQueue: &schedulerQueue}, nil
 }
 
 func (r *RabbitMQRepo) Publish(b []byte, channel string) error {

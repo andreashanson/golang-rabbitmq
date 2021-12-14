@@ -30,8 +30,23 @@ func main() {
 	prd := producer.New(&rabbitRepo)
 	sch := scheduler.NewService(*prd)
 	errChan := make(chan error)
+	out := make(chan msg.Message)
+
 	go func() {
 		sch.Start(errChan)
+	}()
+
+	cns2 := consumer.NewService(&rabbitRepo)
+	helloMsgs, err := cns2.Consume("hello")
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	go func() {
+		err := cns2.HandleMessages(helloMsgs, out)
+		if err != nil {
+			errChan <- err
+		}
 	}()
 
 	cns := consumer.NewService(&rabbitRepo)
@@ -39,7 +54,6 @@ func main() {
 	if err != nil {
 		log.Fatal(err)
 	}
-	out := make(chan msg.Message)
 
 	go func() {
 		err := cns.HandleMessages(msgs, out)
