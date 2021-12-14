@@ -1,39 +1,61 @@
 package scheduler
 
-import "fmt"
+import (
+	"time"
+
+	"github.com/andreashanson/golang-rabbitmq/pkg/producer"
+	"github.com/robfig/cron"
+)
 
 type job struct {
 	name         string
+	cronJob      *cron.Cron
 	cronSchedule string
-	cronFunc     func()
 }
 
-func getJobs() *[]job {
+func createJobs() *[]job {
+	c := cron.New()
 	return &[]job{
-		job{"Get google data", "@every 1s", getGoogleData},
-		job{"SLACK", "@every 1s", getSlackData},
-		job{"LINKEDIN", "@every 3s", getLinkedinData},
-		job{"FACEBOOK", "@every 4s", getFacebookData},
-		job{"INSTAGRAM", "@every 5s", getInstaData},
+		{
+			name:         "google",
+			cronJob:      c,
+			cronSchedule: "@every 10s",
+		},
+		{
+			name:         "slack",
+			cronJob:      c,
+			cronSchedule: "@every 1m",
+		},
+		{
+			name:         "linkedin",
+			cronJob:      c,
+			cronSchedule: "@every 10",
+		},
+		{
+			name:         "facebook",
+			cronJob:      c,
+			cronSchedule: "@every 5s",
+		},
+		{
+			name:         "instagram",
+			cronJob:      c,
+			cronSchedule: "@every 10m",
+		},
 	}
 }
 
-func getGoogleData() {
-	fmt.Println("GET GOOGLE DATA")
-}
-
-func getSlackData() {
-	fmt.Println("GET SLACK DATA")
-}
-
-func getLinkedinData() {
-	fmt.Println("GET LINKEDIN DATA")
-}
-
-func getFacebookData() {
-	fmt.Println("GET Facebook DATA")
-}
-
-func getInstaData() {
-	fmt.Println("GET Instagram DATA")
+func (j job) startJob(p producer.Service) error {
+	var err error
+	err = j.cronJob.AddFunc(j.cronSchedule, func() {
+		start_time := time.Now().UTC()
+		err2 := p.Publish([]byte(`{"type":"`+j.name+`", "start_time":"`+start_time.String()+`"}`), "scheduler")
+		if err2 != nil {
+			err = err2
+		}
+	})
+	if err != nil {
+		return err
+	}
+	j.cronJob.Start()
+	return nil
 }

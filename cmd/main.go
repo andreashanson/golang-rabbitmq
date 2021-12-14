@@ -34,23 +34,18 @@ func main() {
 	defer rabbitRepo.Channel.Close()
 
 	prd := producer.New(&rabbitRepo)
-
-	sch := scheduler.NewService(1, *prd)
-	errChan2 := make(chan error)
+	sch := scheduler.NewService(*prd)
+	errChan := make(chan error)
 	go func() {
-		time := sch.Start(errChan2)
-		for t := range time {
-			fmt.Println(t)
-		}
+		sch.Start(errChan)
 	}()
 
 	cns := consumer.NewService(&rabbitRepo)
-	msgs, err := cns.Consume()
+	msgs, err := cns.Consume("scheduler")
 	if err != nil {
 		log.Fatal(err)
 	}
 	out := make(chan msg.Message)
-	errChan := make(chan error)
 
 	go func() {
 		err := cns.HandleMessages(msgs, out)
@@ -64,9 +59,8 @@ func main() {
 		case msg := <-out:
 			fmt.Println("Message from out chan in main select", msg)
 		case errs := <-errChan:
+			fmt.Println("ERROR FROM ERR CHAN")
 			fmt.Println(errs)
-		case errs2 := <-errChan2:
-			fmt.Println(errs2)
 		}
 	}
 }

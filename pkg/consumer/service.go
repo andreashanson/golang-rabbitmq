@@ -9,7 +9,7 @@ import (
 )
 
 type Repository interface {
-	Consume() (<-chan amqp.Delivery, error)
+	Consume(channel string) (<-chan amqp.Delivery, error)
 	Ack(tag uint64) error
 	Nack(tag uint64) error
 }
@@ -22,8 +22,8 @@ func NewService(r Repository) *Service {
 	return &Service{repo: r}
 }
 
-func (s *Service) Consume() (<-chan amqp.Delivery, error) {
-	msg, err := s.repo.Consume()
+func (s *Service) Consume(channel string) (<-chan amqp.Delivery, error) {
+	msg, err := s.repo.Consume(channel)
 	if err != nil {
 		return msg, err
 	}
@@ -35,10 +35,12 @@ func (s *Service) HandleMessages(msgs <-chan amqp.Delivery, out chan msg.Message
 		var mb msg.Body
 		err := json.Unmarshal(m.Body, &mb)
 		if err != nil {
-			fmt.Println("Could not unmarshall msg")
+			fmt.Println("Could not unmarshall msg", m.DeliveryTag)
 			s.repo.Nack(m.DeliveryTag)
+			//s.repo.Ack(m.DeliveryTag)
 			return err
 		}
+
 		message := msg.Message{
 			DeliveryTag: m.DeliveryTag,
 			Body:        mb,

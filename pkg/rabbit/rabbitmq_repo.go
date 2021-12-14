@@ -5,9 +5,8 @@ import (
 )
 
 type RabbitMQRepo struct {
-	Channel  *amqp.Channel
-	queue    *amqp.Queue
-	ChanName string
+	Channel        *amqp.Channel
+	schedulerQueue *amqp.Queue
 }
 
 func NewRabbitMQRepo(conn *amqp.Connection) (RabbitMQRepo, error) {
@@ -18,25 +17,25 @@ func NewRabbitMQRepo(conn *amqp.Connection) (RabbitMQRepo, error) {
 	}
 
 	q, err := ch.QueueDeclare(
-		"hello", // name
-		false,   // durable
-		false,   // delete when unused
-		false,   // exclusive
-		false,   // no-wait
-		nil,     // arguments
+		"scheduler", // name
+		false,       // durable
+		false,       // delete when unused
+		false,       // exclusive
+		false,       // no-wait
+		nil,         // arguments
 	)
 
 	if err != nil {
 		return RabbitMQRepo{}, err
 	}
-	return RabbitMQRepo{Channel: ch, queue: &q, ChanName: q.Name}, nil
+	return RabbitMQRepo{Channel: ch, schedulerQueue: &q}, nil
 }
 
-func (r *RabbitMQRepo) Publish(b []byte) error {
+func (r *RabbitMQRepo) Publish(b []byte, channel string) error {
 
 	return r.Channel.Publish(
 		"",
-		r.queue.Name,
+		channel,
 		false,
 		false,
 		amqp.Publishing{
@@ -46,9 +45,9 @@ func (r *RabbitMQRepo) Publish(b []byte) error {
 	)
 }
 
-func (r *RabbitMQRepo) Consume() (<-chan amqp.Delivery, error) {
+func (r *RabbitMQRepo) Consume(channel string) (<-chan amqp.Delivery, error) {
 	return r.Channel.Consume(
-		r.queue.Name,
+		channel,
 		"",
 		false,
 		false,

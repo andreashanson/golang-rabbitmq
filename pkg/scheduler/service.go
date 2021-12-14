@@ -1,46 +1,24 @@
 package scheduler
 
 import (
-	"fmt"
-	"time"
-
 	"github.com/andreashanson/golang-rabbitmq/pkg/producer"
-	"github.com/robfig/cron"
 )
 
 type Service struct {
-	Timer    *time.Ticker
-	CronJob  *cron.Cron
-	Producer producer.Service
-	Funcs    func()
 	Jobs     []job
+	Producer producer.Service
 }
 
-func NewService(t int64, p producer.Service) *Service {
-	c := cron.New()
-
-	tt := time.Duration(t)
-	timer := time.NewTicker(tt * time.Second)
-
+func NewService(p producer.Service) *Service {
+	jobs := createJobs()
 	return &Service{
-		Timer:    timer,
-		CronJob:  c,
+		Jobs:     *jobs,
 		Producer: p,
-		Funcs:    getGoogleData,
-		Jobs:     *getJobs(),
 	}
 }
 
-func (s *Service) Start(errChan chan error) <-chan time.Time {
-	fmt.Println("Start schduler service.")
-
+func (s *Service) Start(errChan chan error) {
 	for _, job := range s.Jobs {
-		err := s.CronJob.AddFunc(job.cronSchedule, job.cronFunc)
-		if err != nil {
-			fmt.Println(err)
-		}
+		job.startJob(s.Producer)
 	}
-
-	s.CronJob.Start()
-	return s.Timer.C
 }

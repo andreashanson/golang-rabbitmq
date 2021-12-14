@@ -1,7 +1,7 @@
 package producer
 
 type Repository interface {
-	Publish(b []byte) error
+	Publish(b []byte, channel string) error
 }
 
 type Service struct {
@@ -14,6 +14,6 @@ func New(r Repository) *Service {
 	}
 }
 
-func (s *Service) Publish(b []byte) error {
-	return s.repo.Publish(b)
+func (s *Service) Publish(b []byte, channel string) error {
+	return s.repo.Publish(b, channel)
 }
