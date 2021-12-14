@@ -14,13 +14,7 @@ import (
 
 func main() {
 
-	cfg := config.Config{
-		RabbitMQ: &config.RabbitMQConfig{
-			Host:     "localhost",
-			User:     "guest",
-			Password: "guest",
-		},
-	}
+	cfg := config.NewConfig()
 
 	connection, err := rabbit.Connect(cfg.RabbitMQ)
 	if err != nil {
