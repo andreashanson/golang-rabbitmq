@@ -6,9 +6,9 @@ import (
 
 	"github.com/andreashanson/golang-rabbitmq/pkg/config"
 	"github.com/andreashanson/golang-rabbitmq/pkg/consumer"
+	"github.com/andreashanson/golang-rabbitmq/pkg/external/rabbit"
 	"github.com/andreashanson/golang-rabbitmq/pkg/msg"
 	"github.com/andreashanson/golang-rabbitmq/pkg/producer"
-	"github.com/andreashanson/golang-rabbitmq/pkg/rabbit"
 	"github.com/andreashanson/golang-rabbitmq/pkg/scheduler"
 )
 
@@ -16,12 +16,12 @@ func main() {
 
 	cfg := config.NewConfig()
 
-	connection, err := rabbit.Connect(cfg.RabbitMQ)
+	rabbitConnection, err := rabbit.Connect(cfg.RabbitMQ)
 	if err != nil {
 		log.Fatal(err)
 	}
 
-	rabbitRepo, err := rabbit.NewRabbitMQRepo(connection)
+	rabbitRepo, err := rabbit.NewRabbitMQRepo(rabbitConnection)
 	if err != nil {
 		log.Fatal(err)
 	}

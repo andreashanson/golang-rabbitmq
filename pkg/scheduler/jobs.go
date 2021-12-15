@@ -29,7 +29,7 @@ func createJobs() *[]job {
 		{
 			name:         "linkedin",
 			cronJob:      c,
-			cronSchedule: "@every 10",
+			cronSchedule: "@every 3s",
 		},
 		{
 			name:         "facebook",
@@ -39,7 +39,7 @@ func createJobs() *[]job {
 		{
 			name:         "instagram",
 			cronJob:      c,
-			cronSchedule: "@every 10m",
+			cronSchedule: "@every 4s",
 		},
 	}
 }
@@ -48,7 +48,7 @@ func (j job) startJob(p producer.Service) error {
 	var err error
 	err = j.cronJob.AddFunc(j.cronSchedule, func() {
 		start_time := time.Now().UTC()
-		err2 := p.Publish([]byte(`{"type":"`+j.name+`", "start_time":"`+start_time.String()+`"}`), "scheduler")
+		err2 := p.Publish([]byte(`{"type":"`+j.name+`", "start_time":"`+start_time.String()+`"}`), "jobs")
 		if err2 != nil {
 			err = err2
 		}

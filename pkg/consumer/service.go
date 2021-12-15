@@ -4,6 +4,8 @@ import (
 	"encoding/json"
 	"fmt"
 
+	"github.com/andreashanson/golang-rabbitmq/pkg/config"
+	"github.com/andreashanson/golang-rabbitmq/pkg/external/postgres"
 	"github.com/andreashanson/golang-rabbitmq/pkg/msg"
 	"github.com/streadway/amqp"
 )
@@ -16,11 +18,16 @@ type Repository interface {
 }
 
 type Service struct {
-	repo Repository
+	repo         Repository
+	postgresRepo *postgres.PostgresRepo
 }
 
 func NewService(r Repository) *Service {
-	return &Service{repo: r}
+	cfg := config.NewConfig()
+	postgresConnection := postgres.NewConnection(cfg.Postgres)
+	postgresRepo := postgres.NewPostgresRepo(*postgresConnection)
+
+	return &Service{repo: r, postgresRepo: postgresRepo}
 }
 
 func (s *Service) Consume(queue string) (<-chan amqp.Delivery, error) {
@@ -33,14 +40,11 @@ func (s *Service) Consume(queue string) (<-chan amqp.Delivery, error) {
 
 func (s *Service) HandleMessages(msgType string, msgs <-chan amqp.Delivery, out chan msg.Message) error {
 	switch msgType {
-	case "jobs":
-		fmt.Println("jobs")
+	case "scheduler":
 		for m := range msgs {
 			fmt.Println(string(m.Body))
 		}
-	case "scheduler":
-		fmt.Println("sched")
-
+	case "jobs":
 		for m := range msgs {
 			var mb msg.Body
 			err := json.Unmarshal(m.Body, &mb)
@@ -57,12 +61,22 @@ func (s *Service) HandleMessages(msgType string, msgs <-chan amqp.Delivery, out 
 				Exchange:    m.Exchange,
 			}
 
-			out <- message
+			switch message.Body.Type {
+			case "google":
+				s.postgresRepo.Get(message)
+			case "facebook":
+				s.postgresRepo.Post(message)
+			case "slack":
+				s.postgresRepo.Update(message)
+			default:
+				s.postgresRepo.GetAll(message)
+			}
 			err = s.repo.Ack(m.DeliveryTag)
 			if err != nil {
 				fmt.Println("Could not ack msg")
 				return err
 			}
+			out <- message
 		}
 	}
 	return nil
