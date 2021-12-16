@@ -44,7 +44,7 @@ func createJobs() *[]job {
 	}
 }
 
-func (j job) startJob(p producer.Service) error {
+func (j job) startJob(p *producer.Service) error {
 	var err error
 	err = j.cronJob.AddFunc(j.cronSchedule, func() {
 		start_time := time.Now().UTC()

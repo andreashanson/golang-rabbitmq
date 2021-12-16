@@ -15,3 +15,12 @@ url: http://localhost:15672/
 user: guest
 pw: guest
 
+# Application flow
+scheduler starts cronjobs that is created in jobs.go 
+These cronjobs will publish jobs on the jobs queue depending on the cronjob schedule.
+
+The scheduler service takes the producer as argument which is used to push these jobs on the jobs queue.
+
+The consumer listens on the jobs queue and parse them to messages.
+
+

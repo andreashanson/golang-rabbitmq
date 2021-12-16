@@ -1,6 +1,9 @@
 package config
 
-import "os"
+import (
+	"fmt"
+	"os"
+)
 
 type Config struct {
 	RabbitMQ *RabbitMQConfig
@@ -20,6 +23,7 @@ type RabbitMQConfig struct {
 }
 
 func NewConfig() *Config {
+	fmt.Println("HEJ")
 	return &Config{
 		RabbitMQ: &RabbitMQConfig{
 			Host:     os.Getenv("RABBIT_HOST"),

@@ -6,10 +6,10 @@ import (
 
 type Service struct {
 	Jobs     []job
-	Producer producer.Service
+	Producer *producer.Service
 }
 
-func NewService(p producer.Service) *Service {
+func NewService(p *producer.Service) *Service {
 	jobs := createJobs()
 	return &Service{
 		Jobs:     *jobs,
