@@ -44,12 +44,12 @@ func TestService_Publish(t *testing.T) {
 		{
 			name:    "Happy publish message",
 			s:       &Service{repo: mockRepository{err: nil}},
-			args:    args{b: []byte("test"), queue: "test"},
+			args:    args{b: []byte(`{"type":"facebook", "start_time":"2021-12-15 10:00:10"}`), queue: "jobs"},
 			wantErr: false},
 		{
 			name:    "Not happy publish message",
 			s:       &Service{repo: mockRepository{err: errors.New("Fake error")}},
-			args:    args{b: []byte("test"), queue: "test"},
+			args:    args{b: []byte(`{"type":"google", "start_time":"2021-12-14 10:00:00"}`), queue: "jobs"},
 			wantErr: true,
 		},
 	}

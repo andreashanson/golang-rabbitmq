@@ -1,9 +1,9 @@
 package scheduler
 
 import (
+	"fmt"
 	"time"
 
-	"github.com/andreashanson/golang-rabbitmq/pkg/producer"
 	"github.com/robfig/cron"
 )
 
@@ -11,6 +11,10 @@ type job struct {
 	name         string
 	cronJob      *cron.Cron
 	cronSchedule string
+}
+
+type prod interface {
+	Publish(b []byte, queue string) error
 }
 
 func createJobs() *[]job {
@@ -44,7 +48,7 @@ func createJobs() *[]job {
 	}
 }
 
-func (j job) startJob(p *producer.Service) error {
+func (j job) startJob(p prod) error {
 	var err error
 	err = j.cronJob.AddFunc(j.cronSchedule, func() {
 		start_time := time.Now().UTC()
@@ -54,6 +58,8 @@ func (j job) startJob(p *producer.Service) error {
 		}
 	})
 	if err != nil {
+		fmt.Println("CRON ERROR")
+		fmt.Println(err)
 		return err
 	}
 	j.cronJob.Start()
