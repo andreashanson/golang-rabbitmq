@@ -2,9 +2,7 @@ package consumer
 
 import (
 	"errors"
-	"fmt"
 	"testing"
-	"time"
 
 	"github.com/andreashanson/golang-rabbitmq/pkg/msg"
 	"github.com/streadway/amqp"
@@ -82,69 +80,44 @@ func TestService_HandleMessages(t *testing.T) {
 		deliveries []amqp.Delivery
 	}
 	tests := []struct {
-		name    string
-		s       *Service
-		args    args
-		wantErr bool
+		name      string
+		s         *Service
+		args      args
+		msgsCount int
+		errsCount int
 	}{
 		{
 			name: "Test handlemessages happy path",
 			s:    &Service{repo: mockRepository{}},
 			args: args{msgType: "jobs", deliveries: []amqp.Delivery{
 				{
-					Acknowledger:    nil,
-					Headers:         map[string]interface{}{},
-					ContentType:     "",
-					ContentEncoding: "",
-					DeliveryMode:    0,
-					Priority:        0,
-					CorrelationId:   "",
-					ReplyTo:         "",
-					Expiration:      "",
-					MessageId:       "",
-					Timestamp:       time.Time{},
-					Type:            "",
-					UserId:          "",
-					AppId:           "",
-					ConsumerTag:     "",
-					MessageCount:    0,
-					DeliveryTag:     1,
-					Redelivered:     false,
-					Exchange:        "",
-					RoutingKey:      "",
-					Body:            []byte(`{"type":"google", "start_time":"2021-12-24"}`),
+					DeliveryTag: 1,
+					Body:        []byte(`{"type":"google", "start_time":"2021-12-24"}`),
 				},
 				{
-					Acknowledger:    nil,
-					Headers:         map[string]interface{}{},
-					ContentType:     "",
-					ContentEncoding: "",
-					DeliveryMode:    0,
-					Priority:        0,
-					CorrelationId:   "",
-					ReplyTo:         "",
-					Expiration:      "",
-					MessageId:       "",
-					Timestamp:       time.Time{},
-					Type:            "",
-					UserId:          "",
-					AppId:           "",
-					ConsumerTag:     "",
-					MessageCount:    0,
-					DeliveryTag:     2,
-					Redelivered:     false,
-					Exchange:        "",
-					RoutingKey:      "",
-					Body:            []byte(`{"type":"facebook", "start_time":"2021-12-24"}`),
-				}}},
-			wantErr: false,
+					DeliveryTag: 2,
+					Body:        []byte(`{"type":"facebook", "start_time":"2021-12-24"}`),
+				},
+			}},
+			msgsCount: 2,
+			errsCount: 0,
 		},
-		//{
-		//	name:    "Test handlemessages not happy path",
-		//	s:       &Service{repo: mockRepository{}},
-		//	args:    args{msgType: "jobs ", deliveries: deliveryChan, out: outChan},
-		//	wantErr: true,
-		//},
+		{
+			name: "Test handlemessages happy path with errors",
+			s:    &Service{repo: mockRepository{}},
+			args: args{msgType: "jobs", deliveries: []amqp.Delivery{
+				{
+					DeliveryTag: 1,
+					Body:        []byte(`{"type":"google", "start_time":"2021-12-24"}`),
+				},
+				{
+					DeliveryTag: 2,
+					Body:        []byte(`not json will give error`),
+				},
+			}},
+			msgsCount: 1,
+			errsCount: 1,
+		},
 	}
 	for _, tt := range tests {
 
@@ -152,32 +125,26 @@ func TestService_HandleMessages(t *testing.T) {
 			deliveries := make(chan amqp.Delivery)
 			outChan := make(chan msg.Message)
 			errChan := make(chan error)
-			go func() {
-				tt.s.HandleMessages(tt.args.msgType, deliveries, outChan, errChan)
-			}()
+			go tt.s.HandleMessages(tt.args.msgType, deliveries, outChan, errChan)
 
 			var msgs []msg.Message
+			var errs []error
 
 			for _, d := range tt.args.deliveries {
 				deliveries <- d
 
 				select {
-				case msg := <-outChan:
-					msgs = append(msgs, msg)
-				case err := <-errChan:
-					fmt.Println(err)
+				case m := <-outChan:
+					assert.True(t, len(m.Body.Type) > 0)
+					msgs = append(msgs, m)
+				case e := <-errChan:
+					errs = append(errs, e)
+
 				}
 			}
-			assert.Equal(t, len(msgs), 2)
-
+			assert.Equal(t, tt.msgsCount, len(msgs))
+			assert.Equal(t, tt.errsCount, len(errs))
 		})
-
-		//t.Run(tt.name, func(t *testing.T) {
-		//	err2 := tt.s.HandleMessages(tt.args.msgType, tt.args.deliveries, tt.args.out)
-		//	if err2 != nil {
-		//		t.Errorf("Service.HandleMessages() error2 = %v, wantErr %v", err2, tt.wantErr)
-		//	}
-		//})
 	}
 }
 
