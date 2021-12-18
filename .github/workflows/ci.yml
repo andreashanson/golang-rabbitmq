@@ -13,4 +13,4 @@ jobs:
     - name: Run more then one line script
       run: |
         echo "TEST2"
-        go test
+        pwd
