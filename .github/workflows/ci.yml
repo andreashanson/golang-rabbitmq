@@ -13,4 +13,5 @@ jobs:
     - name: Run more then one line script
       run: |
         echo "TEST2"
-        echo "TEST3"
+        go test
+        go test ./...
