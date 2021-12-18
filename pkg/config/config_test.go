@@ -1,7 +1,6 @@
 package config
 
 import (
-	"fmt"
 	"os"
 	"testing"
 
@@ -39,9 +38,7 @@ func TestNewConfig(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			got := NewConfig()
 			assert.Equal(t, *got.Postgres, *tt.want.Postgres)
-			fmt.Println(*got.Postgres)
-			fmt.Println(*got.RabbitMQ)
-			//assert.Equal(t, *got.RabbitMQ, *tt.want.RabbitMQ)
+			assert.Equal(t, *got.RabbitMQ, *tt.want.RabbitMQ)
 			//if got := NewConfig(); !reflect.DeepEqual(got, tt.want) {
 			//	t.Errorf("NewConfig() = %v, want %v", got, tt.want)
 			//}
