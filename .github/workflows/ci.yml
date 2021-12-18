@@ -14,4 +14,3 @@ jobs:
       run: |
         echo "TEST2"
         go test
-        go test ./...
