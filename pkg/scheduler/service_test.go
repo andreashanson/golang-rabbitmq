@@ -39,6 +39,7 @@ func TestService_Start(t *testing.T) {
 		// TODO: Add test cases.
 	}
 	for _, tt := range tests {
+		//errChan := make(chan error)
 		t.Run(tt.name, func(t *testing.T) {
 			tt.s.Start(tt.args.errChan)
 		})

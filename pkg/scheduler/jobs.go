@@ -1,7 +1,6 @@
 package scheduler
 
 import (
-	"fmt"
 	"time"
 
 	"github.com/robfig/cron"
@@ -58,8 +57,6 @@ func (j job) startJob(p prod) error {
 		}
 	})
 	if err != nil {
-		fmt.Println("CRON ERROR")
-		fmt.Println(err)
 		return err
 	}
 	j.cronJob.Start()

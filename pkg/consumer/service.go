@@ -32,7 +32,6 @@ func (s *Service) Consume(queue string) (<-chan amqp.Delivery, error) {
 }
 
 func (s *Service) HandleMessages(msgType string, msgs <-chan amqp.Delivery, out chan<- msg.Message, errs chan<- error) {
-	fmt.Println("HANDLE MSG's")
 	switch msgType {
 	case "scheduler":
 		for m := range msgs {
@@ -43,7 +42,6 @@ func (s *Service) HandleMessages(msgType string, msgs <-chan amqp.Delivery, out 
 			var mb msg.Body
 			err := json.Unmarshal(m.Body, &mb)
 			if err != nil {
-				fmt.Println("Could not unmarshall msg", m.DeliveryTag)
 				s.repo.Nack(m.DeliveryTag)
 				//s.repo.Ack(m.DeliveryTag)
 				errs <- err

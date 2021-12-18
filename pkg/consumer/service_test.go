@@ -68,8 +68,10 @@ func TestService_Consume(t *testing.T) {
 			if err != nil {
 				assert.Error(t, err)
 				assert.True(t, tt.wantErr == true)
+				return
 			}
 			assert.Equal(t, got, tt.want)
+			assert.True(t, tt.wantErr == false)
 		})
 	}
 }

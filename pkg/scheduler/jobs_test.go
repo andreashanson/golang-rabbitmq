@@ -1,7 +1,7 @@
 package scheduler
 
 import (
-	"fmt"
+	"errors"
 	"testing"
 
 	"github.com/robfig/cron"
@@ -30,12 +30,16 @@ func Test_job_startJob(t *testing.T) {
 			args:    args{mockProducer{err: nil}},
 			wantErr: false,
 		},
-		//{
-		//	name:    "test publish happy path",
-		//	j:       job{},
-		//	args:    args{mockProducer{err: errors.New("FAKE ERROR")}},
-		//	wantErr: true,
-		//},
+		{
+			name: "test publish happy path",
+			j: job{
+				name:         "google",
+				cronJob:      c,
+				cronSchedule: "@every 1s",
+			},
+			args:    args{mockProducer{err: errors.New("FAKE ERROR")}},
+			wantErr: false,
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
@@ -44,7 +48,6 @@ func Test_job_startJob(t *testing.T) {
 				assert.Equal(t, tt.wantErr, true)
 			}
 			assert.Equal(t, tt.wantErr, false)
-
 		})
 	}
 }
@@ -54,7 +57,5 @@ type mockProducer struct {
 }
 
 func (mp mockProducer) Publish(b []byte, queue string) error {
-	fmt.Println("ERROR")
-	fmt.Println(mp.err)
 	return mp.err
 }
