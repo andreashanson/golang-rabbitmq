@@ -3,14 +3,14 @@ name: CI
 on: 
   push: 
     branches: 
-    — master 
-    — staging
-    — develop 
+      — master 
+      — staging
+      — develop 
   pull_request: 
     branches: 
-    — master 
-    — staging 
-    — develop
+      — master 
+      — staging 
+      — develop
 
 jobs:
   build:
