@@ -9,7 +9,8 @@ jobs:
     steps:
     - uses: actions/checkout@v1
     - name: Run one-line script
-      run: echo "TEST1"
+      run: go test ./...
     - name: Run more then one line script
       run: |
-        go test ./...
+        echo "Line one"
+        echo "Line two"
