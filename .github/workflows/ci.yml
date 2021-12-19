@@ -1,23 +1,15 @@
 name: CI
 
-on: 
-  push: 
-    branches: 
-    — master 
-    — staging
-    — develop 
-  pull_request: 
-    branches: 
-    — master 
-    — staging 
-    — develop
+on: [push]
 
 jobs:
   build:
     runs-on: ubuntu-latest
 
     steps:
-    - uses: actions/checkout@v2
+    - uses: actions/checkout@v1
+    - name: Run one-line script
+      run: echo "TEST1"
     - name: Run more then one line script
       run: |
         go test ./...
