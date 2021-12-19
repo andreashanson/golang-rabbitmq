@@ -14,3 +14,4 @@ jobs:
       run: |
         echo "Line one"
         echo "Line two"
+        make test
