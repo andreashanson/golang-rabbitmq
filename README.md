@@ -23,4 +23,7 @@ The scheduler service takes the producer as argument which is used to push these
 
 The consumer listens on the jobs queue and parse them to messages.
 
+# Run image locally
+docker inspect <rabbit_container_id>
+enter ip in .env for RABBIT_HOST
 
