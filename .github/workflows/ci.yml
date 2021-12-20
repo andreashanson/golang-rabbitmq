@@ -7,11 +7,14 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-    - uses: actions/checkout@v1
+    - uses: actions/checkout@v2
     - name: Run one-line script
-      run: go test ./...
+      run: echo "Test one line script"
     - name: Run more then one line script
       run: |
-        echo "Line one"
-        echo "Line two"
+        echo "Run the tests"
         make test
+    - name: Build docker image
+      run: |
+        echo "Build docker image"
+        make docker_build
